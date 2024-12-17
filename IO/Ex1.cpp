@@ -19,15 +19,14 @@ FileHandler::FileHandler(const std::string path, std::ios_base::openmode permiss
 }
 
 //CCtor
-FileHandler::FileHandler(const FileHandler &other) {
+FileHandler::FileHandler(const FileHandler &other) 
+: m_path(other.m_path), 
+  m_permissions(other.m_permissions) {
 
-    m_fd.open(other.m_path, other.m_permissions);
+    m_fd.open(m_path, m_permissions);
     if (!m_fd.is_open()) {
-        throw std::runtime_error("Failed to open file: " + other.m_path);
+        throw std::runtime_error("Failed to open file: " + m_path);
     }   
-
-    m_path = other.m_path;
-    m_permissions = other.m_permissions;
 }
 
 //MCtor
@@ -76,3 +75,19 @@ FileHandler& FileHandler::operator=(FileHandler &&other) noexcept {
 
     return *this;
 } 
+
+std::fstream &FileHandler::getFD() {
+
+    return m_fd;
+}
+
+void FileHandler::createFile(const std::string filename) {
+
+    std::ofstream file(filename, std::ios::out);
+
+    if (!file) {
+        throw std::runtime_error("Failed to create file: " + filename);
+    }
+
+    file.close();
+}

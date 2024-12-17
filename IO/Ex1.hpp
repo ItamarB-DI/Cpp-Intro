@@ -11,6 +11,9 @@ public:
     FileHandler& operator=(const FileHandler &other); //Copy Assignment
     FileHandler& operator=(FileHandler &&other) noexcept; //Move Assignment
 
+    std::fstream &getFD();
+    static void createFile(const std::string filename);
+
     ~FileHandler() noexcept = default; //Dtor
 
 private:

@@ -17,7 +17,7 @@ public:
 
 private:
     void copyDynamicBuffer(const DynamicBuffer<T>& src);
-    void deAllocate();
+    void deAllocate() noexcept;
 
     size_t m_size;
     T *m_buffer;
@@ -74,8 +74,8 @@ DynamicBuffer<T>& DynamicBuffer<T>::operator=(DynamicBuffer<T>&& other) noexcept
     return *this;
 }
 
-template <typename T> 
-DynamicBuffer<T>::~DynamicBuffer() {
+template <typename T> //Dtor
+DynamicBuffer<T>::~DynamicBuffer() noexcept {
 
     deAllocate();
 }
@@ -115,7 +115,7 @@ void DynamicBuffer<T>::copyDynamicBuffer(const DynamicBuffer<T>& src) {
 
 
 template <typename T>
-void DynamicBuffer<T>::deAllocate() {
+void DynamicBuffer<T>::deAllocate() noexcept {
 
     delete m_buffer;
     m_buffer = nullptr;

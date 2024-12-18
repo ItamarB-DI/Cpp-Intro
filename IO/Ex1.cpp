@@ -8,8 +8,8 @@
 
 //Ctor
 FileHandler::FileHandler(const std::string path, std::ios_base::openmode permissions)
-: m_permissions(permissions),
-  m_path(path)
+: m_path(path), 
+  m_permissions(permissions)
 {
 
     m_fd.open(path, permissions);
@@ -41,7 +41,7 @@ FileHandler::FileHandler(FileHandler &&other) noexcept
 //Copy Assignment
 FileHandler& FileHandler::operator=(const FileHandler &other) {
 
-    assert(this == &other);
+    assert(this != &other);
 
     if (m_fd.is_open()) {
         m_fd.close();
@@ -61,7 +61,7 @@ FileHandler& FileHandler::operator=(const FileHandler &other) {
 //Move Assignment
 FileHandler& FileHandler::operator=(FileHandler &&other) noexcept {
 
-    assert(this == &other);
+    assert(this != &other);
 
     if (m_fd.is_open()) {
         m_fd.close();

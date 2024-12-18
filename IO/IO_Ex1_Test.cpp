@@ -7,12 +7,16 @@
 
 void simpleCopyTest();
 void simpleMoveTest();
+void simpleMoveOpTest();
+
+void checkFileLineCount(const std::string &file_name, int expected_lines);
 
 int main() {
 
     try {
         simpleCopyTest();
         simpleMoveTest();
+        simpleMoveOpTest();
 
         std::cout << "All tests passed successfully!" << std::endl;
     } catch (const std::exception &e) {
@@ -33,7 +37,7 @@ void simpleCopyTest() {
 
     std::fstream &file1_fd = file1.getFD();
     if (!file1_fd.is_open()) {
-        throw std::runtime_error("Failed to open file1 for reading.");
+        throw std::runtime_error("Failed to open file1.");
     }
 
     file1_fd << "First Test" << std::endl;
@@ -44,7 +48,7 @@ void simpleCopyTest() {
 
     std::fstream &copied_file_fd = copied_file.getFD();
     if (!copied_file_fd.is_open()) {
-        throw std::runtime_error("Failed to open copied_file for reading.");
+        throw std::runtime_error("Failed to open copied_file.");
     }
     
     copied_file_fd.seekg(0, std::ios_base::beg); 
@@ -99,4 +103,56 @@ void simpleMoveTest()
     }
 
     std::cout << "simpleMoveTest passed!" << std::endl;
+}
+
+
+void simpleMoveOpTest() {
+
+    const std::string file_name = "test_file3.txt";
+    std::ios_base::openmode prem = std::ios::in | std::ios::out | std::ios::app;
+
+    FileHandler::createFile(file_name);
+
+    FileHandler file1(file_name, prem);
+    std::fstream &file1_fd = file1.getFD();
+
+    file1_fd << "Move operator Test" << std::endl;
+    file1_fd.flush();
+
+    /**********************************************/
+    const std::string file_name2 = "test_file4.txt";   
+    FileHandler::createFile(file_name2);
+
+    FileHandler file2(file_name2, prem);
+    std::fstream &file2_fd = file2.getFD();
+
+    file2_fd << "Should Have Only One Line" << std::endl;
+    file2_fd.flush();
+
+    file2 = std::move(file1);
+
+    file2.getFD() << "Second Line" << std::endl;
+    file2.getFD().flush();
+
+    checkFileLineCount(file_name, 2);
+    checkFileLineCount(file_name2, 1);
+
+    std::cout << "simpleMoveOpTest passed!" << std::endl;
+}
+
+
+/*********************** Helper Functions ******************************/
+
+void checkFileLineCount(const std::string &file_name, int expected_lines) {
+    std::ifstream file(file_name, std::ios::in);
+
+    int line_count = 0;
+    std::string line;
+    while (std::getline(file, line)) {
+        ++line_count;
+    }
+
+    if (line_count != expected_lines) {
+        throw std::runtime_error("Count Line Check Failed.");
+    }   
 }

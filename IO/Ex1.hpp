@@ -13,7 +13,7 @@ public:
 
     std::fstream &getFile();
 
-    ~FileHandler() noexcept = default; //Dtor
+    ~FileHandler() noexcept; //Dtor
 
 private:
     std::fstream m_stream;

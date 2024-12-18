@@ -94,3 +94,9 @@ std::fstream &FileHandler::getFile() {
 
     return m_stream;
 }
+
+FileHandler::~FileHandler() noexcept {
+
+    m_stream.flush();
+    m_stream.close();
+}

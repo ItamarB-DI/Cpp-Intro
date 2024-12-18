@@ -12,26 +12,32 @@ FileHandler::FileHandler(const std::string path, std::ios_base::openmode permiss
   m_permissions(permissions)
 {
 
-    m_fd.open(path, permissions);
-    if (!m_fd.is_open()) {
+    m_file.open(path, permissions);
+    if (!m_file.is_open()) {
         throw std::runtime_error("Failed to open file: " + path);
     }
 }
 
 //CCtor
-FileHandler::FileHandler(const FileHandler &other) 
+FileHandler::FileHandler(FileHandler &other) 
 : m_path(other.m_path), 
   m_permissions(other.m_permissions) {
 
-    m_fd.open(m_path, m_permissions);
-    if (!m_fd.is_open()) {
+    m_file.open(m_path, m_permissions);
+    if (!m_file.is_open()) {
         throw std::runtime_error("Failed to open file: " + m_path);
     }   
+
+    auto g = other.m_file.tellg();
+    auto p = other.m_file.tellp();
+    if (g == -1 || p == -1) {
+        throw std::runtime_error("Failed to do tellg/p on file: " + other.m_path);
+    }
 }
 
 //MCtor
 FileHandler::FileHandler(FileHandler &&other) noexcept 
-: m_fd(std::move(other.m_fd)),
+: m_file(std::move(other.m_file)),
   m_path(std::move(other.m_path)),
   m_permissions(other.m_permissions)
 {
@@ -39,18 +45,27 @@ FileHandler::FileHandler(FileHandler &&other) noexcept
 }
 
 //Copy Assignment
-FileHandler& FileHandler::operator=(const FileHandler &other) {
+FileHandler& FileHandler::operator=(FileHandler &other) {
 
     assert(this != &other);
 
-    if (m_fd.is_open()) {
-        m_fd.close();
+    if (m_file.is_open()) {
+        m_file.close();
     }
 
-    m_fd.open(other.m_path, other.m_permissions);
-    if (!m_fd.is_open()) {
+    m_file.open(other.m_path, other.m_permissions);
+    if (!m_file.is_open()) {
         throw std::runtime_error("Failed to open file: " + other.m_path);
     }   
+
+    auto g = other.m_file.tellg();
+    auto p = other.m_file.tellp();
+    if (g == -1 || p == -1) {
+        throw std::runtime_error("Failed to do tellg/p on file: " + other.m_path);
+    }
+
+    m_file.seekg(g);
+    m_file.seekp(p);
 
     m_path = other.m_path;
     m_permissions = other.m_permissions;
@@ -63,11 +78,11 @@ FileHandler& FileHandler::operator=(FileHandler &&other) noexcept {
 
     assert(this != &other);
 
-    if (m_fd.is_open()) {
-        m_fd.close();
+    if (m_file.is_open()) {
+        m_file.close();
     }
 
-    m_fd = std::move(other.m_fd);
+    m_file = std::move(other.m_file);
     m_path = std::move(other.m_path);
     m_permissions = other.m_permissions;
 
@@ -76,9 +91,9 @@ FileHandler& FileHandler::operator=(FileHandler &&other) noexcept {
     return *this;
 } 
 
-std::fstream &FileHandler::getFD() {
+std::fstream &FileHandler::getFile() {
 
-    return m_fd;
+    return m_file;
 }
 
 void FileHandler::createFile(const std::string filename) {

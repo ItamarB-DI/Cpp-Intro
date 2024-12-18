@@ -5,19 +5,19 @@
 class FileHandler {
 public:
     explicit FileHandler(const std::string path, std::ios_base::openmode permissions); //Ctor
-    FileHandler(const FileHandler &other); //CCtor
+    FileHandler(FileHandler &other); //CCtor non-const because that tellg/p are modifying 
     FileHandler(FileHandler &&other) noexcept; //MCtor
 
-    FileHandler& operator=(const FileHandler &other); //Copy Assignment
+    FileHandler& operator=(FileHandler &other); //Copy Assignment non-const because that tellg/p are modifying
     FileHandler& operator=(FileHandler &&other) noexcept; //Move Assignment
 
-    std::fstream &getFD();
+    std::fstream &getFile();
     static void createFile(const std::string filename);
 
     ~FileHandler() noexcept = default; //Dtor
 
 private:
-    std::fstream m_fd;
+    std::fstream m_file;
     std::string m_path;
     std::ios_base::openmode m_permissions;
 

@@ -35,7 +35,7 @@ void simpleCopyTest() {
 
     FileHandler file1(file_name, prem);
 
-    std::fstream &file1_fd = file1.getFD();
+    std::fstream &file1_fd = file1.getFile();
     if (!file1_fd.is_open()) {
         throw std::runtime_error("Failed to open file1.");
     }
@@ -46,7 +46,7 @@ void simpleCopyTest() {
     FileHandler copied_file(file1);
     std::string line;
 
-    std::fstream &copied_file_fd = copied_file.getFD();
+    std::fstream &copied_file_fd = copied_file.getFile();
     if (!copied_file_fd.is_open()) {
         throw std::runtime_error("Failed to open copied_file.");
     }
@@ -72,13 +72,13 @@ void simpleMoveTest()
     FileHandler::createFile(file_name);
 
     FileHandler file1(file_name, prem);
-    std::fstream &file1_fd = file1.getFD();
+    std::fstream &file1_fd = file1.getFile();
 
     file1_fd << "Move Test" << std::endl;
     file1_fd.flush();
 
     FileHandler moved_file(std::move(file1));
-    std::fstream &moved_file_fd = moved_file.getFD();
+    std::fstream &moved_file_fd = moved_file.getFile();
 
     moved_file_fd.seekg(0, std::ios::beg); 
     std::string line;
@@ -91,7 +91,7 @@ void simpleMoveTest()
     }
 
     try {
-        std::fstream &invalid_fd = file1.getFD();
+        std::fstream &invalid_fd = file1.getFile();
 
         invalid_fd.exceptions(std::ios::failbit | std::ios::badbit);
         invalid_fd << "This should fail" << std::endl;
@@ -114,7 +114,7 @@ void simpleMoveOpTest() {
     FileHandler::createFile(file_name);
 
     FileHandler file1(file_name, prem);
-    std::fstream &file1_fd = file1.getFD();
+    std::fstream &file1_fd = file1.getFile();
 
     file1_fd << "Move operator Test" << std::endl;
     file1_fd.flush();
@@ -124,15 +124,15 @@ void simpleMoveOpTest() {
     FileHandler::createFile(file_name2);
 
     FileHandler file2(file_name2, prem);
-    std::fstream &file2_fd = file2.getFD();
+    std::fstream &file2_fd = file2.getFile();
 
     file2_fd << "Should Have Only One Line" << std::endl;
     file2_fd.flush();
 
     file2 = std::move(file1);
 
-    file2.getFD() << "Second Line" << std::endl;
-    file2.getFD().flush();
+    file2.getFile() << "Second Line" << std::endl;
+    file2.getFile().flush();
 
     checkFileLineCount(file_name, 2);
     checkFileLineCount(file_name2, 1);

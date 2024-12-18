@@ -10,6 +10,7 @@ void simpleMoveTest();
 void simpleMoveOpTest();
 
 void checkFileLineCount(const std::string &file_name, int expected_lines);
+void createFile(const std::string filename);
 
 int main() {
 
@@ -31,7 +32,7 @@ void simpleCopyTest() {
     const std::string file_name = "test_file1.txt";
     std::ios_base::openmode prem = std::ios::in | std::ios::out;
 
-    FileHandler::createFile(file_name);
+    createFile(file_name);
 
     FileHandler file1(file_name, prem);
 
@@ -69,7 +70,7 @@ void simpleMoveTest()
     const std::string file_name = "test_file2.txt";
     std::ios_base::openmode prem = std::ios::in | std::ios::out;
 
-    FileHandler::createFile(file_name);
+    createFile(file_name);
 
     FileHandler file1(file_name, prem);
     std::fstream &file1_fd = file1.getFile();
@@ -111,7 +112,7 @@ void simpleMoveOpTest() {
     const std::string file_name = "test_file3.txt";
     std::ios_base::openmode prem = std::ios::in | std::ios::out | std::ios::app;
 
-    FileHandler::createFile(file_name);
+    createFile(file_name);
 
     FileHandler file1(file_name, prem);
     std::fstream &file1_fd = file1.getFile();
@@ -121,7 +122,7 @@ void simpleMoveOpTest() {
 
     /**********************************************/
     const std::string file_name2 = "test_file4.txt";   
-    FileHandler::createFile(file_name2);
+    createFile(file_name2);
 
     FileHandler file2(file_name2, prem);
     std::fstream &file2_fd = file2.getFile();
@@ -155,4 +156,15 @@ void checkFileLineCount(const std::string &file_name, int expected_lines) {
     if (line_count != expected_lines) {
         throw std::runtime_error("Count Line Check Failed.");
     }   
+}
+
+void createFile(const std::string filename) {
+
+    std::ofstream file(filename, std::ios::out);
+
+    if (!file) {
+        throw std::runtime_error("Failed to create file: " + filename);
+    }
+
+    file.close();
 }

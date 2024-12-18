@@ -1,5 +1,5 @@
 
-#include <fstream> //ios_base::openmode
+#include <fstream> 
 #include <string>
 
 class FileHandler {
@@ -12,12 +12,11 @@ public:
     FileHandler& operator=(FileHandler &&other) noexcept; //Move Assignment
 
     std::fstream &getFile();
-    static void createFile(const std::string filename);
 
     ~FileHandler() noexcept = default; //Dtor
 
 private:
-    std::fstream m_file;
+    std::fstream m_stream;
     std::string m_path;
     std::ios_base::openmode m_permissions;
 

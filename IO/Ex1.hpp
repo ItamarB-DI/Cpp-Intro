@@ -13,6 +13,16 @@ public:
 
     std::fstream &getFile();
 
+    void Open(std::ios_base::openmode permissions = std::ios_base::openmode(0));
+    void Close();
+    std::uintmax_t Size();
+
+    //++Read
+    //++Write
+    //++Seek
+    //++Tell
+
+
     ~FileHandler() noexcept; //Dtor
 
 private:

@@ -49,6 +49,7 @@ FileHandler& FileHandler::operator=(FileHandler &other) {
     assert(this != &other);
 
     if (m_stream.is_open()) {
+        m_stream.flush();
         m_stream.close();
     }
 
@@ -78,6 +79,7 @@ FileHandler& FileHandler::operator=(FileHandler &&other) noexcept {
     assert(this != &other);
 
     if (m_stream.is_open()) {
+        m_stream.flush();
         m_stream.close();
     }
 
@@ -97,6 +99,10 @@ std::fstream &FileHandler::getFile() {
 
 FileHandler::~FileHandler() noexcept {
 
-    m_stream.flush();
-    m_stream.close();
+    if (m_stream.is_open())
+    {
+        m_stream.flush();
+        m_stream.close();
+    }
+
 }

@@ -108,12 +108,11 @@ void simpleMoveTest()
 
 
 void simpleMoveOpTest() {
-
     const std::string file_name = "test_file3.txt";
     std::ios_base::openmode prem = std::ios::in | std::ios::out | std::ios::app;
 
     createFile(file_name);
-
+    
     FileHandler file1(file_name, prem);
     std::fstream &file1_fd = file1.getFile();
 

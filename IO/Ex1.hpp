@@ -1,6 +1,10 @@
 
+#pragma once
+
 #include <fstream> 
 #include <string>
+#include <vector>
+
 
 class FileHandler {
 public:
@@ -11,17 +15,11 @@ public:
     FileHandler& operator=(FileHandler &other); //Copy Assignment non-const because that tellg/p are modifying
     FileHandler& operator=(FileHandler &&other) noexcept; //Move Assignment
 
-    std::fstream &getFile();
-
     void Open(std::ios_base::openmode permissions = std::ios_base::openmode(0));
     void Close();
+    void Write(const std::vector<char> data);
+    std::vector<char>  Read(size_t size_to_read);
     std::uintmax_t Size();
-
-    //++Read
-    //++Write
-    //++Seek
-    //++Tell
-
 
     ~FileHandler() noexcept; //Dtor
 
@@ -29,5 +27,6 @@ private:
     std::fstream m_stream;
     std::string m_path;
     std::ios_base::openmode m_permissions;
+    std::streampos m_read_pos;
 
 };

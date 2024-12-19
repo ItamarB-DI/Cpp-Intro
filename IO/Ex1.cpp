@@ -9,15 +9,9 @@
 FileHandler::FileHandler(const std::string path, std::ios_base::openmode permissions)
 : m_path(path), 
   m_permissions(permissions),
-  m_read_pos(std::streampos(0))
-{
+  m_read_pos(std::streampos(0)) {
 
-    m_stream.open(path, permissions);
-    if (!m_stream.is_open()) {
-        throw std::runtime_error("Failed to open file: " + path);
-    }
-
-    m_stream.exceptions(std::ios::failbit | std::ios::badbit);
+    Open();
 }
 
 //CCtor, non-const because of tellg/p which are modifying 
@@ -26,16 +20,16 @@ FileHandler::FileHandler(FileHandler &other)
   m_permissions(other.m_permissions),
   m_read_pos(other.m_read_pos) {
 
-    m_stream.open(m_path, m_permissions);
-    if (!m_stream.is_open()) {
-        throw std::runtime_error("CCtor Failed to open file: " + m_path);
-    }   
+    Open(); 
 
     auto g = other.m_stream.tellg();
     auto p = other.m_stream.tellp();
     if (g == -1 || p == -1) {
         throw std::runtime_error("CCtor Failed to do tellg/p on file: " + m_path);
     }
+
+    m_stream.seekg(g);
+    m_stream.seekp(p);
 }
 
 //MCtor
@@ -55,15 +49,13 @@ FileHandler& FileHandler::operator=(FileHandler &other) {
 
     assert(this != &other);
 
-    if (m_stream.is_open()) {
-        m_stream.flush();
-        m_stream.close();
-    }
+    this->Close();
 
-    m_stream.open(other.m_path, other.m_permissions);
-    if (!m_stream.is_open()) {
-        throw std::runtime_error("Failed to open file: " + other.m_path);
-    }   
+    m_path = other.m_path;
+    m_permissions = other.m_permissions;
+    m_read_pos = other.m_read_pos;
+
+    this->Open();
 
     auto g = other.m_stream.tellg();
     auto p = other.m_stream.tellp();
@@ -74,10 +66,6 @@ FileHandler& FileHandler::operator=(FileHandler &other) {
     m_stream.seekg(g);
     m_stream.seekp(p);
 
-    m_path = other.m_path;
-    m_permissions = other.m_permissions;
-    m_read_pos = other.m_read_pos;
-
     return *this;
 }
 
@@ -86,10 +74,7 @@ FileHandler& FileHandler::operator=(FileHandler &&other) noexcept {
 
     assert(this != &other);
 
-    if (m_stream.is_open()) {
-        m_stream.flush();
-        m_stream.close();
-    }
+   this->Close();
 
     m_stream = std::move(other.m_stream);
     m_path = std::move(other.m_path);
@@ -103,29 +88,13 @@ FileHandler& FileHandler::operator=(FileHandler &&other) noexcept {
     return *this;
 } 
 
-void FileHandler::Open(std::ios_base::openmode permissions) {
+void FileHandler::ReOpen(std::ios_base::openmode permissions) {
 
-    if (m_stream.is_open()) { return; }
+    Close();
 
-    if (std::ios_base::openmode(0) != permissions) {
-        m_permissions = permissions;
-    }
+    m_permissions = permissions;
 
-    m_stream.open(m_path, m_permissions);
-    if (!m_stream.is_open()) {
-        throw std::runtime_error("Failed to open file: " + m_path);
-    }   
-
-    m_stream.exceptions(std::ios::failbit | std::ios::badbit);
-}
-
-void FileHandler::Close() {
-
-    if (m_stream.is_open())
-    {
-        m_stream.flush();
-        m_stream.close();
-    }
+    Open();
 }
 
 void FileHandler::Write(const std::vector<char> data) {
@@ -168,6 +137,22 @@ std::uintmax_t FileHandler::Size() {
 
 
 FileHandler::~FileHandler() noexcept {
+
+   Close();
+}
+
+
+void FileHandler::Open() {
+
+    m_stream.open(m_path, m_permissions);
+    if (!m_stream.is_open()) {
+        throw std::runtime_error("Failed to open file: " + m_path);
+    }
+
+    m_stream.exceptions(std::ios::failbit | std::ios::badbit);
+}
+
+void FileHandler::Close() {
 
     if (m_stream.is_open())
     {

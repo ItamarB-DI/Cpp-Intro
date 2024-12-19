@@ -7,16 +7,21 @@
 
 #include "Ex1.hpp"
 
-void firstTest();
+void writeReadSizeTest();
 void simpleCCtorTest();
+void simpleMCtorTest();
+void reopenTest();
+
 
 inline std::string vecToStr(const std::vector<char> vec);
 void createFile(const std::string &filename);
 
 int main() {
     try {
-        firstTest();
+        writeReadSizeTest();
         simpleCCtorTest();
+        simpleMCtorTest();
+        reopenTest();
         std::cout << "All tests passed successfully!" << std::endl;
     } catch (const std::exception &e) {
         std::cerr << "Test Failed: " << e.what() << std::endl;
@@ -25,7 +30,7 @@ int main() {
     return 0;
 }
 
-void firstTest() {
+void writeReadSizeTest() {
     const std::string filename = "write_read_test.txt";
     createFile(filename);
 
@@ -84,6 +89,74 @@ void simpleCCtorTest() {
     }
 
     std::cout << "simpleCCtorTest passed!" << std::endl;
+}
+
+void simpleMCtorTest() {
+
+    const std::string file_name = "move_test.txt";
+    std::ios_base::openmode prem = std::ios::in | std::ios::out;
+
+    createFile(file_name);
+
+    FileHandler fh(file_name, prem);
+
+    const std::string str1 = "Test Move";  
+    std::vector<char> test1(str1.begin(), str1.end());
+    
+    fh.Write(test1);
+    fh.Read(5);
+
+    FileHandler moved_file(std::move(fh));
+    
+    std::vector<char> move_vec = moved_file.Read(str1.size() - 5);
+
+    if (vecToStr(move_vec) != "Move") {
+        throw std::runtime_error("MCtor method failed: " + file_name);
+    }
+
+    try {
+        fh.Read(1);
+
+        throw std::runtime_error("Move constructor failed: file1 should not be valid after move.");
+
+    } catch (const std::ios_base::failure &e) {
+        std::cout << "simpleMCtorTest passed!" << std::endl;
+    }
+}
+
+void reopenTest() {
+
+    const std::string file_name = "reopen_test.txt";
+    std::ios_base::openmode prem = std::ios::out;
+    FileHandler fh(file_name, prem);
+
+    const std::string str1 = "Test Reopen\n"; 
+    const std::vector<char> test1(str1.begin(), str1.end());
+
+    const std::string str2 = "Test Reopen2"; 
+    const std::vector<char> test2(str2.begin(), str2.end());
+
+    fh.Write(test1);
+    fh.Write(test2);
+
+    try {
+        fh.Read(2);
+        throw std::runtime_error("Permission Failed: Opened only for write ");
+    } catch (const std::exception &e) {
+
+    }
+
+    fh.ReOpen(std::ios::in);
+    try {
+        const std::string str3 = "should not write it"; 
+        const std::vector<char> test3(str3.begin(), str3.end());
+        fh.Write(test3);
+
+        throw std::runtime_error("reopen Failed: Opened only for read ");
+    } catch (const std::exception &e) {
+        std::cout << "reOpen passed!" << std::endl;
+    }
+
 }
 
 void createFile(const std::string &filename) {

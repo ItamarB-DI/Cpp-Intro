@@ -133,7 +133,6 @@ void FileHandler::Write(const std::vector<char> data) {
     m_stream.write(data.data(), data.size());
 }
 
-
 std::vector<char> FileHandler::Read(size_t size_to_read) {
     
     std::vector<char> read_buff(size_to_read, 0);
@@ -141,15 +140,12 @@ std::vector<char> FileHandler::Read(size_t size_to_read) {
     m_stream.seekg(m_read_pos);
 
     if (!m_stream.read(read_buff.data(), size_to_read)) {
-        auto bytes_read = m_stream.gcount();
         m_stream.clear();
 
-        m_read_pos += bytes_read;
-
-        throw std::runtime_error("Read Failed: Bytes read " + bytes_read);
+        throw std::runtime_error("Read Failed");
     }
 
-    m_read_pos += size_to_read;
+    m_read_pos = static_cast<std::streamoff>(m_read_pos) + size_to_read;
 
     return read_buff;
 }

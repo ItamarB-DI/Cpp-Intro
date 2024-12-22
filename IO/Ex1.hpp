@@ -24,7 +24,7 @@ public:
     void seekg(std::streamoff off, std::ios_base::seekdir way);
     
     std::uintmax_t size();
-    std::uintmax_t sizeUntillEOF();
+    std::uintmax_t sizeUntilEOF();
 
     ~FileHandler() noexcept; // Dtor
 

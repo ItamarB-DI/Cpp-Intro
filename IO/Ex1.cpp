@@ -124,6 +124,8 @@ std::vector<char> FileHandler::read(size_t size_to_read) {
         throw std::runtime_error("File doesn't have permission to read");
     }
 
+    size_to_read = std::min(size_to_read, static_cast<size_t>(sizeUntilEOF()));
+
     std::vector<char> read_buff(size_to_read, 0);
     m_stream.seekg(m_read_pos);
 
@@ -167,7 +169,7 @@ void FileHandler::seekg(std::streamoff off, std::ios_base::seekdir way) {
     m_read_pos = new_pos;
 }
 
-std::uintmax_t FileHandler::sizeUntillEOF() {
+std::uintmax_t FileHandler::sizeUntilEOF() {
 
     if (!m_stream.is_open()) { 
         throw std::runtime_error("File is not open"); 
@@ -188,17 +190,13 @@ std::uintmax_t FileHandler::size() {
         throw std::runtime_error("File is not open"); 
     }
 
-    m_stream.seekg(0, std::ios::beg);             
-
-    auto beg_idx = m_stream.tellg();
-
     m_stream.seekg(0, std::ios::end);             
 
     auto eof_idx = m_stream.tellg();
 
     m_stream.seekg(m_read_pos); 
 
-    return eof_idx - beg_idx;
+    return eof_idx - std::streampos(0);
 }
 
 

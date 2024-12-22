@@ -52,7 +52,7 @@ void writeReadSizeTest() {
         throw std::runtime_error("Failed in the size or write method: " + filename);
     }
 
-    if (fh.sizeUntillEOF() != str1.size()) {
+    if (fh.sizeUntilEOF() != str1.size()) {
         throw std::runtime_error("Failed in the Write or sizeUntillEOF method: " + filename);
     }
 
@@ -65,7 +65,7 @@ void writeReadSizeTest() {
         throw std::runtime_error("Failed in the size method: " + filename);
     }
 
-    if (fh.sizeUntillEOF() != str1.size() - first_read_vec.size()) {
+    if (fh.sizeUntilEOF() != str1.size() - first_read_vec.size()) {
         throw std::runtime_error("sizeUntillEOF method failed: " + filename);
     }
 

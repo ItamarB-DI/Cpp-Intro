@@ -29,8 +29,8 @@ public:
     ~FileHandler() noexcept; // Dtor
 
 private:
-    void close();
-    void open();
+    void closeFile();
+    void openFile();
 
     std::fstream m_stream;
     std::string m_path;

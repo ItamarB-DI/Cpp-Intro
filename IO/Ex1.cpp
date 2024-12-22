@@ -11,7 +11,7 @@ FileHandler::FileHandler(const std::string path, std::ios_base::openmode permiss
   m_permissions(permissions),
   m_read_pos(std::streampos(0)) {
 
-    open();
+    openFile();
 }
 
 //CCtor, non-const because of tellg/p which are modifying 
@@ -20,13 +20,10 @@ FileHandler::FileHandler(FileHandler &other)
   m_permissions(other.m_permissions),
   m_read_pos(other.m_read_pos) {
 
-    open(); 
+    openFile(); 
 
     auto g = other.m_stream.tellg();
     auto p = other.m_stream.tellp();
-    if (g == -1 || p == -1) {
-        throw std::runtime_error("CCtor Failed to do tellg/p on file: " + m_path);
-    }
 
     m_stream.seekg(g);
     m_stream.seekp(p);
@@ -49,19 +46,16 @@ FileHandler& FileHandler::operator=(FileHandler &other) {
 
     assert(this != &other);
 
-    this->close();
+    this->closeFile();
 
     m_path = other.m_path;
     m_permissions = other.m_permissions;
     m_read_pos = other.m_read_pos;
 
-    this->open();
+    this->openFile();
 
     auto g = other.m_stream.tellg();
     auto p = other.m_stream.tellp();
-    if (g == -1 || p == -1) {
-        throw std::runtime_error("Failed to do tellg/p on file: " + other.m_path);
-    }
 
     m_stream.seekg(g);
     m_stream.seekp(p);
@@ -74,7 +68,7 @@ FileHandler& FileHandler::operator=(FileHandler &&other) noexcept {
 
     assert(this != &other);
 
-   this->close();
+   this->closeFile();
 
     m_stream = std::move(other.m_stream);
     m_path = std::move(other.m_path);
@@ -90,11 +84,11 @@ FileHandler& FileHandler::operator=(FileHandler &&other) noexcept {
 
 void FileHandler::reOpen(std::ios_base::openmode permissions) {
 
-    close();
+    closeFile();
 
     m_permissions = permissions;
 
-    open();
+    openFile();
 }
 
 void FileHandler::write(const std::vector<char> data) {
@@ -128,9 +122,6 @@ void FileHandler::seekg(std::streampos pos) {
     m_stream.seekg(pos);
 
     auto new_pos = m_stream.tellg();
-    if (new_pos == std::streampos(-1)) {
-        throw std::runtime_error("Failed to get the current position after seeking");
-    }
 
     m_read_pos = new_pos;
 }
@@ -143,9 +134,6 @@ void FileHandler::seekg(std::streamoff off, std::ios_base::seekdir way) {
     m_stream.seekg(off, way);
 
     auto new_pos = m_stream.tellg();
-    if (new_pos == std::streampos(-1)) {
-        throw std::runtime_error("Failed to get the current position after seeking");
-    }
 
     m_read_pos = new_pos;
 }
@@ -157,9 +145,6 @@ std::uintmax_t FileHandler::sizeUntillEOF() {
     m_stream.seekg(0, std::ios::end);             
 
     auto eof_idx = m_stream.tellg();
-    if (eof_idx == -1) {
-        throw std::runtime_error("Tell Failed");
-    } 
 
     m_stream.seekg(m_read_pos);     
 
@@ -173,16 +158,10 @@ std::uintmax_t FileHandler::size() {
     m_stream.seekg(0, std::ios::beg);             
 
     auto beg_idx = m_stream.tellg();
-    if (beg_idx == -1) {
-        throw std::runtime_error("Tell Failed");
-    } 
 
     m_stream.seekg(0, std::ios::end);             
 
     auto eof_idx = m_stream.tellg();
-    if (eof_idx == -1) {
-        throw std::runtime_error("Tell Failed");
-    } 
 
     m_stream.seekg(m_read_pos); 
 
@@ -192,12 +171,14 @@ std::uintmax_t FileHandler::size() {
 
 FileHandler::~FileHandler() noexcept {
 
-   close();
+   closeFile();
 }
 
 
-void FileHandler::open() {
+void FileHandler::openFile() {
 
+    m_stream.exceptions(std::ios::failbit | std::ios::badbit);
+    
     m_stream.open(m_path, m_permissions);
     if (!m_stream.is_open()) {
         throw std::runtime_error("Failed to open file: " + m_path);
@@ -206,7 +187,7 @@ void FileHandler::open() {
     m_stream.exceptions(std::ios::failbit | std::ios::badbit);
 }
 
-void FileHandler::close() {
+void FileHandler::closeFile() {
 
     if (m_stream.is_open())
     {

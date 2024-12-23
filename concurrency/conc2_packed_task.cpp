@@ -35,14 +35,15 @@ int main(int argc, char *argv[]) {
     
     try {
         std::vector<char> data = file_content.get();
-        std::cout << std::endl;
+
         for (unsigned long int i = 0; i < data.size(); ++i) {
             std::cout << data[i];
         }
         std::cout << std::endl;
         
-    } catch (...) {
-        std::cerr << "read file content thread failed" << std::endl;
+    } catch (std::exception& e) {
+        
+        std::cerr << "read file content thread failed: " << e.what() << std::endl;
     }
 
 
@@ -51,6 +52,8 @@ int main(int argc, char *argv[]) {
 }
 
 std::vector<char> readFileContent(std::filesystem::path file_name) {
+
+    //throw std::runtime_error("Test throwing an error in the readFileContent thread"); // for testing
 
     const size_t BUFFER_SIZE = 1024;
     std::vector<char> buffer(BUFFER_SIZE, 0);

@@ -6,17 +6,14 @@
 #include <fstream> 
 
 
-void clientJob(std::promise<std::filesystem::path> file_name, std::future<std::vector<char>> what_the_server_read);
-void serverJob(std::future<std::filesystem::path> client_file_name, std::promise<std::vector<char>> promise_file_data);
+void clientJob(std::exception_ptr& ex_ptr, std::promise<std::filesystem::path> file_name, std::future<std::vector<char>> what_the_server_read);
+void serverJob(std::exception_ptr& ex_ptr, std::future<std::filesystem::path> client_file_name, std::promise<std::vector<char>> promise_file_data);
 
 void readFileName(std::promise<std::filesystem::path>& file_name);
 void readFileContent(std::promise<std::vector<char>>& promise_file_data, std::filesystem::path& file_name);
 
 int main() {
     
-    // create packed_task for the file name (the clientJob would get the promise & serverJob would get the future)
-    // create packed_task for the file content (the clientJob would get the future & serverJob would get the promise) 
-
     std::promise<std::filesystem::path> promise_file_name;
     std::future<std::filesystem::path> future_file_name = promise_file_name.get_future();
 
@@ -24,40 +21,74 @@ int main() {
     std::promise<std::vector<char>> promise_file_content;
     std::future<std::vector<char>> future_file_content = promise_file_content.get_future();
 
-    // create thread with client job
-    // create thread with server job
+    std::exception_ptr client_thread_ex_ptr;
+    std::exception_ptr server_thread_ex_ptr;
 
-    std::thread client_thread(clientJob, std::move(promise_file_name), std::move(future_file_content));
-    std::thread server_thread(serverJob, std::move(future_file_name), std::move(promise_file_content));
+    try {
+        std::thread client_thread(clientJob, std::ref(client_thread_ex_ptr), std::move(promise_file_name), std::move(future_file_content));
+        std::thread server_thread(serverJob, std::ref(server_thread_ex_ptr), std::move(future_file_name), std::move(promise_file_content));
 
+        if (client_thread.joinable()) {
+        client_thread.join();
+        }
+        if (server_thread.joinable()) {
+            server_thread.join();
+        }
+    } catch (std::system_error& e) {
+        std::cerr << "failed to create a thread: " << e.what() << std::endl;
+    }
 
-    // join client
-    // join server
+    if (client_thread_ex_ptr != nullptr) {
+        try {
+            std::rethrow_exception(client_thread_ex_ptr);
+        } catch (std::exception& e) {
+            std::cerr << "client thread throw an exception: " << e.what() << std::endl;
+        }
+    }
 
-    client_thread.join();
-    server_thread.join();
+    if (server_thread_ex_ptr != nullptr) {
+        try {
+            std::rethrow_exception(server_thread_ex_ptr);
+        } catch (std::exception& e) {
+            std::cerr << "server thread throw an exception: " << e.what() << std::endl;
+        }
+    }
 
     return 0;
 }
 
 
-void clientJob(std::promise<std::filesystem::path> file_name, std::future<std::vector<char>> what_the_server_read) {
+void clientJob(std::exception_ptr& ex_ptr, std::promise<std::filesystem::path> file_name, std::future<std::vector<char>> what_the_server_read) {
 
     readFileName(file_name);
 
-    std::vector<char> file_content = what_the_server_read.get();
-    std::cout << std::endl;
-    for (long unsigned int i = 0; i < file_content.size(); ++i) {
-        std::cout << file_content[i];
+    try {
+        std::vector<char> file_content = what_the_server_read.get();
+        std::cout << std::endl;
+        for (long unsigned int i = 0; i < file_content.size(); ++i) {
+            std::cout << file_content[i];
+        }
+        std::cout << std::endl;
+    } catch (...) {
+
+        ex_ptr = std::current_exception();
     }
-    std::cout << std::endl;
+    
 }
 
-void serverJob(std::future<std::filesystem::path> client_file_name, std::promise<std::vector<char>> promise_file_data) {
+void serverJob(std::exception_ptr& ex_ptr, std::future<std::filesystem::path> client_file_name, std::promise<std::vector<char>> promise_file_data) {
 
-    auto file_name = client_file_name.get();
+    std::filesystem::path file_name;
 
-    readFileContent(promise_file_data, file_name);
+    try {
+
+        file_name = client_file_name.get();
+        readFileContent(promise_file_data, file_name);
+    } catch (...) {
+        ex_ptr = std::current_exception();
+    }
+
+    
 }
 
 void readFileName(std::promise<std::filesystem::path>& file_name) {
@@ -68,6 +99,8 @@ void readFileName(std::promise<std::filesystem::path>& file_name) {
         std::cout << "Please Enter File Name: " << std::endl;
         std::cin >> path;
         
+        //throw std::runtime_error("Test, client puts an error in the server promise, the server thread should throw"); // for testing
+
         file_name.set_value(path);
     } catch (...) {
         
@@ -82,8 +115,6 @@ void readFileName(std::promise<std::filesystem::path>& file_name) {
 
 void readFileContent(std::promise<std::vector<char>>& promise_file_data, std::filesystem::path& file_name) {
 
-    // ++handle exceptions 
-
     try {
         std::fstream file(file_name, std::ios::in);
         std::istreambuf_iterator<char> it(file), eof;
@@ -93,6 +124,8 @@ void readFileContent(std::promise<std::vector<char>>& promise_file_data, std::fi
             data.push_back(*it);
             ++it;
         }
+
+        //throw std::runtime_error("Test, server puts an error in the client promise, the client thread should throw"); // for testing 
 
         promise_file_data.set_value(data);
     }  catch (...) {

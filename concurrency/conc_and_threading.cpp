@@ -69,9 +69,13 @@ void readFileName(std::promise<std::filesystem::path>& file_name) {
         std::cin >> path;
         
         file_name.set_value(path);
-    } catch (std::ios_base::failure &e) {
-        auto eptr = std::current_exception();
-        file_name.set_exception(eptr);
+    } catch (...) {
+        
+        try {
+            file_name.set_exception(std::current_exception());
+        } catch (std::future_error&) {
+            throw std::runtime_error("Failed to set exception in promise");
+        }
     }
 
 }
@@ -91,9 +95,13 @@ void readFileContent(std::promise<std::vector<char>>& promise_file_data, std::fi
         }
 
         promise_file_data.set_value(data);
-    } catch (std::exception& e) {
-        auto eptr = std::current_exception();
-        promise_file_data.set_exception(eptr);
+    }  catch (...) {
+        
+        try {
+            promise_file_data.set_exception(std::current_exception());
+        } catch (std::future_error&) {
+            throw std::runtime_error("Failed to set exception in promise");
+        }
     }
 
 }

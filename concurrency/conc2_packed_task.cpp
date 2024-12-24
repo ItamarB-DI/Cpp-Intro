@@ -66,14 +66,7 @@ std::vector<char> readFileContent(std::filesystem::path file_name) {
     int bytes_read = 0;
     try {
         while ( (bytes_read = read(fd, buffer.data(), BUFFER_SIZE)) > 0) {
-            int i = 0;
-            while (bytes_read) {
-            
-                data_read.push_back(buffer[i]);
-
-                --bytes_read;
-                ++i;
-            }
+            data_read.insert(data_read.end(), buffer.begin(), buffer.begin() + bytes_read);
         } 
     } catch (std::bad_alloc& e) {
         throw std::runtime_error(std::string("vector push_back method failed") + e.what());

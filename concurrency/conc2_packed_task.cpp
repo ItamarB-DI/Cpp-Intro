@@ -61,29 +61,20 @@ std::vector<char> readFileContent(std::filesystem::path file_name) {
     }
 
     int bytes_read = 0;
+    int times_tried = 0;
     try {
-        while ( (bytes_read = read(fd, buffer.data(), BUFFER_SIZE)) > 0) {
+        while ( (bytes_read = read(fd, buffer.data(), BUFFER_SIZE)) > 0 && times_tried < 3) {
             data_read.insert(data_read.end(), buffer.begin(), buffer.begin() + bytes_read);
         } 
-    } catch (std::bad_alloc& e) {
-        throw std::runtime_error(std::string("vector push_back method failed") + e.what());
-    }
 
-    int times_retried = 0;
-    try {
-        while (bytes_read == -1 && times_retried < 3) {
-            if (bytes_read == -1) {
-                if (errno & EAGAIN || errno & EAGAIN || errno & EAGAIN) {
-                    ++times_retried;
-                } else {
-                    throw std::system_error(std::make_error_code(static_cast<std::errc>(errno)), "Read syscall failed");
-                }
+        if (bytes_read == -1) {
+            if (errno & EAGAIN || errno & EINTR || errno & EWOULDBLOCK) {
+                ++times_tried;
+            } else {
+                throw std::system_error(std::make_error_code(static_cast<std::errc>(errno)), "Read syscall failed");
             }
-
-            while ( (bytes_read = read(fd, buffer.data(), BUFFER_SIZE)) > 0) {
-                data_read.insert(data_read.end(), buffer.begin(), buffer.begin() + bytes_read);
-            } 
         }
+
     } catch (std::bad_alloc& e) {
         throw std::runtime_error(std::string("vector push_back method failed") + e.what());
     }

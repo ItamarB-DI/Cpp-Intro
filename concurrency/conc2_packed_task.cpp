@@ -52,8 +52,6 @@ int main(int argc, char *argv[]) {
 
 std::vector<char> readFileContent(std::filesystem::path file_name) {
 
-    //throw std::runtime_error("Test throwing an error in the readFileContent thread"); // for testing
-
     const size_t BUFFER_SIZE = 1024;
     std::vector<char> buffer(BUFFER_SIZE);
     std::vector<char> data_read;

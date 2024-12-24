@@ -1,3 +1,4 @@
+#pragma once
 #include <filesystem>
 #include <vector>
 
@@ -12,7 +13,10 @@ public:
     // ++ void addNewReply(Reply) 
 
 private:
+
+
     std::vector<std::filesystem::path>& m_files;
+    int m_fanotify;
     // ++ std::queue<EventItem> m_events
     // ++ std::queue<Replay> m_replies
 

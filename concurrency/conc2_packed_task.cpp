@@ -1,4 +1,3 @@
-
 #include <vector>
 #include <string>
 #include <filesystem>
@@ -21,11 +20,11 @@ int main(int argc, char *argv[]) {
     }
     std::filesystem::path file_name = argv[1];
 
-    std::packaged_task<std::vector<char>(std::filesystem::path)> read_file_content(readFileContent);
-    std::future<std::vector<char>> file_content = read_file_content.get_future();
+    std::packaged_task<std::vector<char>(std::filesystem::path)> read_file_content_task(readFileContent);
+    std::future<std::vector<char>> file_content = read_file_content_task.get_future();
     
     try {
-        std::thread server_thread(std::move(read_file_content), file_name);
+        std::thread server_thread(std::move(read_file_content_task), file_name);
         if (server_thread.joinable()) {
             server_thread.join();
         }
@@ -41,14 +40,14 @@ int main(int argc, char *argv[]) {
         }
         std::cout << std::endl;
         
-    } catch (std::exception& e) {
-        
-        std::cerr << "read file content thread failed: " << e.what() << std::endl;
+    } catch (std::system_error& e) {
+        std::cerr << "syscall in thread failed: " << e.what() << std::endl;
+    } catch (std::bad_alloc& e) {
+        std::cerr << "alloc in thread failed: " << e.what() << std::endl;
     }
 
-
-
     return 0;
+
 }
 
 std::vector<char> readFileContent(std::filesystem::path file_name) {
@@ -56,32 +55,34 @@ std::vector<char> readFileContent(std::filesystem::path file_name) {
     //throw std::runtime_error("Test throwing an error in the readFileContent thread"); // for testing
 
     const size_t BUFFER_SIZE = 1024;
-    std::vector<char> buffer(BUFFER_SIZE, 0);
+    std::vector<char> buffer(BUFFER_SIZE);
     std::vector<char> data_read;
 
     int fd = open(file_name.c_str(), O_RDONLY);
     if (fd == -1) {
-        throw std::runtime_error("Open syscall failed" + errno);
+        throw std::system_error(std::make_error_code(static_cast<std::errc>(errno)), "Read syscall failed");
     }
 
     int bytes_read = 0;
-    while ( (bytes_read = read(fd, buffer.data(), BUFFER_SIZE)) > 0) {
-        int i = 0;
-        while (bytes_read) {
-            try {
+    try {
+        while ( (bytes_read = read(fd, buffer.data(), BUFFER_SIZE)) > 0) {
+            int i = 0;
+            while (bytes_read) {
+            
                 data_read.push_back(buffer[i]);
-            } catch (std::bad_alloc& e) {
-                throw std::runtime_error(std::string("vector push_back method failed") + e.what());
-            }
 
-            --bytes_read;
-            ++i;
-        }
-    } 
+                --bytes_read;
+                ++i;
+            }
+        } 
+    } catch (std::bad_alloc& e) {
+        throw std::runtime_error(std::string("vector push_back method failed") + e.what());
+    }
 
     if (bytes_read == -1) {
-        throw std::runtime_error("Read syscall failed" + errno);
+        throw std::system_error(std::make_error_code(static_cast<std::errc>(errno)), "Read syscall failed");
     }
 
     return data_read;
+
 }

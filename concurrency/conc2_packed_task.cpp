@@ -69,7 +69,7 @@ std::vector<char> readFileContent(std::filesystem::path file_name) {
             if (bytes_read == 0) {
                 break;
             } else if (bytes_read == -1) {
-                if (errno == EAGAIN || errno == EINTR || errno == EWOULDBLOCK) {
+                if (errno == EINTR) {
                     ++times_tried;
                 } else {
                     close(fd);

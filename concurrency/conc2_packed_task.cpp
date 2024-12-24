@@ -57,27 +57,33 @@ std::vector<char> readFileContent(std::filesystem::path file_name) {
 
     int fd = open(file_name.c_str(), O_RDONLY);
     if (fd == -1) {
-        throw std::system_error(std::make_error_code(static_cast<std::errc>(errno)), "Read syscall failed");
+        throw std::system_error(std::make_error_code(static_cast<std::errc>(errno)), "Open syscall failed");
     }
 
-    int bytes_read = 0;
     int times_tried = 0;
     try {
-        while ( (bytes_read = read(fd, buffer.data(), BUFFER_SIZE)) > 0 && times_tried < 3) {
-            data_read.insert(data_read.end(), buffer.begin(), buffer.begin() + bytes_read);
-        } 
 
-        if (bytes_read == -1) {
-            if (errno & EAGAIN || errno & EINTR || errno & EWOULDBLOCK) {
-                ++times_tried;
+        while (times_tried < 3) {
+            int bytes_read = read(fd, buffer.data(), BUFFER_SIZE);
+
+            if (bytes_read == 0) {
+                break;
+            } else if (bytes_read == -1) {
+                if (errno == EAGAIN || errno == EINTR || errno == EWOULDBLOCK) {
+                    ++times_tried;
+                } else {
+                    close(fd);
+                    throw std::system_error(std::make_error_code(static_cast<std::errc>(errno)), "Read syscall failed");
+                }
             } else {
-                throw std::system_error(std::make_error_code(static_cast<std::errc>(errno)), "Read syscall failed");
-            }
-        }
-
+                data_read.insert(data_read.end(), buffer.begin(), buffer.begin() + bytes_read);
+            }         
+        } 
     } catch (std::bad_alloc& e) {
+        close(fd);
         throw std::runtime_error(std::string("vector push_back method failed") + e.what());
     }
 
+    close(fd);
     return data_read;
 }
